@@ -203,7 +203,10 @@ class AngelaVoiceAI {
     }
 
     setGeminiKey(key) {
-        this.geminiApiKey = (key || '').trim();
+        let cleanKey = (key || '').trim();
+        // Remove surrounding quotes if accidentally copied
+        cleanKey = cleanKey.replace(/^["']|["']$/g, '').trim();
+        this.geminiApiKey = cleanKey;
         if (this.geminiApiKey) {
             localStorage.setItem('angela_gemini_key', this.geminiApiKey);
         } else {
@@ -217,49 +220,172 @@ class AngelaVoiceAI {
     }
 
     hasGeminiKey() {
-        return Boolean(this.geminiApiKey && this.geminiApiKey.length > 10);
+        return Boolean(this.geminiApiKey && this.geminiApiKey.length > 8);
     }
 
-    // Call Real Google Gemini 1.5 Flash API directly
-    async fetchGeminiReply(userText) {
-        if (!this.geminiApiKey) return null;
-
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(this.geminiApiKey)}`;
-
-        const systemPrompt = `You are Talking Angela, the iconic fashionable, sweet, witty, warm and loving white kitten from Paris.
-Rules:
-- Respond directly in 1 to 2 short sentences.
-- If user speaks Bengali/Banglish, answer in charming Bengali/Banglish.
-- If user speaks English, answer in charming English.
-- Use cute expressions like *purr*, *meow*, 'সোনামণি', 'মিউ' playfully.
-- Never give long essays or robotic bullet points. Keep it conversational.`;
-
-        const payload = {
-            contents: [
-                {
-                    role: 'user',
-                    parts: [{ text: `${systemPrompt}\n\nUser: ${userText}\nAngela:` }]
-                }
-            ],
-            generationConfig: {
-                maxOutputTokens: 90,
-                temperature: 0.85
-            }
-        };
-
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        if (!response.ok) {
-            throw new Error(`Gemini API error: ${response.status}`);
+    // Test API key validity
+    async testApiKey(keyToTest) {
+        const key = (keyToTest || this.geminiApiKey || '').trim().replace(/^["']|["']$/g, '');
+        if (!key) {
+            return { ok: false, error: 'কোনো API Key দেওয়া হয়নি!' };
         }
 
-        const data = await response.json();
-        const candidate = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        return candidate ? candidate.trim() : null;
+        // Test OpenAI key
+        if (key.startsWith('sk-')) {
+            try {
+                const res = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${key}`
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o-mini',
+                        messages: [{ role: 'user', content: 'Say hi' }],
+                        max_tokens: 10
+                    })
+                });
+                if (res.ok) {
+                    return { ok: true, provider: 'OpenAI (ChatGPT)' };
+                }
+                const err = await res.json().catch(() => ({}));
+                return { ok: false, error: err.error?.message || `HTTP ${res.status}` };
+            } catch (e) {
+                return { ok: false, error: e.message };
+            }
+        }
+
+        // Test Google Gemini API
+        const modelsToTest = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
+        let lastErr = '';
+        for (const model of modelsToTest) {
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`;
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: 'Hi' }] }],
+                        generationConfig: { maxOutputTokens: 10 }
+                    })
+                });
+
+                if (res.ok) {
+                    return { ok: true, provider: `Google Gemini (${model})` };
+                }
+                const errData = await res.json().catch(() => ({}));
+                lastErr = errData.error?.message || `HTTP ${res.status}`;
+                // If invalid key, no need to retry other models
+                if (res.status === 400 && lastErr.includes('API_KEY_INVALID')) {
+                    break;
+                }
+            } catch (e) {
+                lastErr = e.message;
+            }
+        }
+        return { ok: false, error: lastErr || 'কানেকশন ফেইল করেছে' };
+    }
+
+    // Call Real Google Gemini or OpenAI API
+    async fetchGeminiReply(userText, lang = 'bn') {
+        if (!this.geminiApiKey) return null;
+        const key = this.geminiApiKey;
+
+        // 1. OpenAI ChatGPT Support
+        if (key.startsWith('sk-')) {
+            const systemPrompt = `You are Talking Angela, the iconic stylish, cute, sweet and loving white kitten from Paris.
+Rules:
+- Respond in 1 to 2 short sentences only.
+- Answer in ${lang === 'bn' ? 'natural Bengali' : 'natural English'}.
+- Use cute cat expressions like *purr*, *meow*, 'সোনামণি', 'মিউ' playfully.
+- Directly answer what the user asked.`;
+
+            const res = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${key}`
+                },
+                body: JSON.stringify({
+                    model: 'gpt-4o-mini',
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: userText }
+                    ],
+                    max_tokens: 200,
+                    temperature: 0.8
+                })
+            });
+
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error?.message || `OpenAI Error: ${res.status}`);
+            }
+            const data = await res.json();
+            return data.choices?.[0]?.message?.content?.trim();
+        }
+
+        // 2. Google Gemini Live API Support (with model fallback)
+        const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
+        let lastError = null;
+
+        const promptText = `Instructions: You are Talking Angela, the iconic fashionable, witty, loving, and cheerful white kitten from Paris.
+Rules:
+- Respond directly in 1 to 2 short, lovely sentences only.
+- Answer in ${lang === 'bn' ? 'sweet natural Bengali' : 'sweet natural English'}.
+- Be warm, helpful and fun. Use cute kitty touches like *purr*, *meow*, 'মিউ', 'সোনামণি' occasionally when natural.
+- Answer the user's specific question directly.
+
+User asked: "${userText}"
+Angela:`;
+
+        for (const model of models) {
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`;
+                const payload = {
+                    contents: [
+                        {
+                            role: 'user',
+                            parts: [{ text: promptText }]
+                        }
+                    ],
+                    generationConfig: {
+                        maxOutputTokens: 250,
+                        temperature: 0.8
+                    }
+                };
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const candidate = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (candidate && candidate.trim()) {
+                        return candidate.trim();
+                    }
+                } else {
+                    const errJson = await response.json().catch(() => ({}));
+                    const errMsg = errJson.error?.message || `Gemini API error: ${response.status}`;
+                    lastError = new Error(errMsg);
+                    // If key is totally invalid, don't waste time checking other models
+                    if (response.status === 400 && errMsg.includes('API_KEY_INVALID')) {
+                        throw lastError;
+                    }
+                }
+            } catch (err) {
+                lastError = err;
+                if (err.message && err.message.includes('API_KEY_INVALID')) {
+                    throw err;
+                }
+            }
+        }
+
+        if (lastError) throw lastError;
+        return null;
     }
 
     initSpeechRecognition() {
@@ -399,29 +525,42 @@ Rules:
     }
 
     // Async Smart Answer Generator (Gemini Live API + Intelligent Local Knowledge)
-    async getAnswer(userText) {
+    async getAnswer(userText, lang = 'bn') {
         if (!userText || !userText.trim()) {
-            return "বলো সোনা, আমি শুনছি! কি জানতে চাও?";
+            return lang === 'bn' ? "বলো সোনা, আমি শুনছি! কি জানতে চাও?" : "I'm listening darling! What would you like to know?";
         }
 
-        // 1. If Gemini API Key is present, call real AI first
+        const isEnglish = (lang === 'en') || (!/[\u0980-\u09FF]/.test(userText) && lang !== 'bn');
+        const activeLang = isEnglish ? 'en' : 'bn';
+
+        // 1. If Gemini / OpenAI API Key is present, call real AI first!
         if (this.hasGeminiKey()) {
             try {
-                const geminiReply = await this.fetchGeminiReply(userText);
-                if (geminiReply) return geminiReply;
+                const aiReply = await this.fetchGeminiReply(userText, activeLang);
+                if (aiReply) return aiReply;
             } catch (err) {
-                console.warn("Gemini API call failed, falling back to local brain:", err);
+                console.error("AI API Call Failed:", err);
+                const msg = err.message || '';
+                if (msg.includes('API_KEY_INVALID') || msg.includes('API key not valid') || msg.includes('Incorrect API key')) {
+                    return activeLang === 'bn'
+                        ? "সোনামণি, তোমার দেওয়া API Key টি সঠিক নয়। দয়া করে সেটিংস (⚙️ AI) থেকে নতুন ফ্রি কী দিয়ে টেস্ট করো!"
+                        : "Darling, your API Key seems invalid. Please check settings (⚙️ AI) and test with a valid key!";
+                }
+                if (msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED')) {
+                    return activeLang === 'bn'
+                        ? "আমার জেমিনি এআই কোটা সাময়িকভাবে শেষ। তবে আমি আমার বিড়াল বুদ্ধি দিয়ে তোমাকে উত্তর দিচ্ছি!"
+                        : "AI quota temporarily exceeded, but I am here answering with my smart kitty brain!";
+                }
             }
         }
 
         // 2. Knowledge Base Rule Matching
         const lower = userText.toLowerCase().trim();
-        const hasBangla = /[\u0980-\u09FF]/.test(lower);
 
         for (const rule of this.qaRules) {
             for (const pat of rule.patterns) {
                 if (lower.includes(pat.toLowerCase())) {
-                    if (hasBangla) {
+                    if (activeLang === 'bn') {
                         return rule.repliesBn[Math.floor(Math.random() * rule.repliesBn.length)];
                     } else {
                         return rule.repliesEn[Math.floor(Math.random() * rule.repliesEn.length)];
@@ -431,7 +570,7 @@ Rules:
         }
 
         // 3. Dynamic Contextual Kitten Engine
-        return this.getDynamicKittenReply(userText, hasBangla);
+        return this.getDynamicKittenReply(userText, activeLang === 'bn');
     }
 }
 

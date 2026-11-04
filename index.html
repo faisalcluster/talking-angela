@@ -188,37 +188,37 @@
                 </div>
                 
                 <div class="items-grid">
-                    <div class="item-tile" data-food="🥛" data-name="দুধ">
+                    <div class="item-tile" data-food="🥛" data-name="দুধ" data-name-en="Milk">
                         <span class="item-icon">🥛</span>
                         <span>দুধ (Milk)</span>
                     </div>
-                    <div class="item-tile" data-food="🧁" data-name="কাপকেক">
+                    <div class="item-tile" data-food="🧁" data-name="কাপকেক" data-name-en="Cupcake">
                         <span class="item-icon">🧁</span>
                         <span>কাপকেক (Cupcake)</span>
                     </div>
-                    <div class="item-tile" data-food="🐟" data-name="মাছের টুকরো">
+                    <div class="item-tile" data-food="🐟" data-name="মাছের টুকরো" data-name-en="Fish Treat">
                         <span class="item-icon">🐟</span>
-                        <span>মাছের টুকরো</span>
+                        <span>মাছের টুকরো (Fish)</span>
                     </div>
-                    <div class="item-tile" data-food="🍦" data-name="আইসক্রিম">
+                    <div class="item-tile" data-food="🍦" data-name="আইসক্রিম" data-name-en="Ice Cream">
                         <span class="item-icon">🍦</span>
-                        <span>আইসক্রিম</span>
+                        <span>আইসক্রিম (Ice Cream)</span>
                     </div>
-                    <div class="item-tile" data-food="🍓" data-name="স্ট্রবেরি">
+                    <div class="item-tile" data-food="🍓" data-name="স্ট্রবেরি" data-name-en="Strawberry">
                         <span class="item-icon">🍓</span>
-                        <span>স্ট্রবেরি</span>
+                        <span>স্ট্রবেরি (Strawberry)</span>
                     </div>
-                    <div class="item-tile" data-food="🍪" data-name="বিস্কুট">
+                    <div class="item-tile" data-food="🍪" data-name="বিস্কুট" data-name-en="Cookie">
                         <span class="item-icon">🍪</span>
-                        <span>বিস্কুট</span>
+                        <span>বিস্কুট (Cookie)</span>
                     </div>
-                    <div class="item-tile" data-food="🍉" data-name="তরমুজ">
+                    <div class="item-tile" data-food="🍉" data-name="তরমুজ" data-name-en="Watermelon">
                         <span class="item-icon">🍉</span>
-                        <span>তরমুজ</span>
+                        <span>তরমুজ (Watermelon)</span>
                     </div>
-                    <div class="item-tile" data-food="🍩" data-name="ডোনাট">
+                    <div class="item-tile" data-food="🍩" data-name="ডোনাট" data-name-en="Donut">
                         <span class="item-icon">🍩</span>
-                        <span>ডোনাট</span>
+                        <span>ডোনাট (Donut)</span>
                     </div>
                 </div>
             </div>
@@ -283,14 +283,16 @@
                     </div>
 
                     <div class="ai-form-box">
-                        <label for="input-gemini-key">Google Gemini API Key (ফ্রি):</label>
+                        <label for="input-gemini-key">Google Gemini বা OpenAI API Key:</label>
                         <p class="ai-help-text">
-                            আসল চ্যাটজিপিটি/জেমিনি এআই ব্রেন দিয়ে কথা বলতে চাইলে নিচের বক্সে আপনার ফ্রি কী পেস্ট করুন। এটি আপনার ব্রাউজারে সুরক্ষিত থাকবে।
+                            আসল চ্যাটজিপিটি বা জেমিনি এআই ব্রেন দিয়ে কথা বলতে চাইলে নিচের বক্সে আপনার API Key দিন।
                         </p>
                         <div class="key-input-row">
-                            <input type="password" id="input-gemini-key" placeholder="AIzaSy... (API Key দিন)" autocomplete="off">
+                            <input type="password" id="input-gemini-key" placeholder="AIzaSy... (Gemini) বা sk-... (OpenAI)" autocomplete="off">
                             <button id="btn-save-gemini" class="btn-save-key">সেভ</button>
+                            <button id="btn-test-gemini" class="btn-test-key" title="কী টেস্ট করুন">🧪 টেস্ট</button>
                         </div>
+                        <div id="ai-test-result" class="ai-test-result"></div>
                         <div class="key-actions-row">
                             <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" class="link-get-key">
                                 🔗 ফ্রি Google Gemini API Key নিন ↗

@@ -528,7 +528,7 @@ class AngelaAudioEngine {
                 return;
             }
 
-            const isBangla = /[\u0980-\u09FF]/.test(cleanText);
+            const isBangla = options.lang ? (options.lang === 'bn') : /[\u0980-\u09FF]/.test(cleanText);
             const lang = isBangla ? 'bn' : 'en';
 
             // On static hosting (like GitHub Pages) where /api/speak backend doesn't exist:
@@ -595,7 +595,7 @@ class AngelaAudioEngine {
             try { window.speechSynthesis.cancel(); } catch (e) {}
             const utterance = new SpeechSynthesisUtterance(text);
             const voices = window.speechSynthesis.getVoices();
-            const isBangla = /[\u0980-\u09FF]/.test(text);
+            const isBangla = options.lang ? (options.lang === 'bn') : /[\u0980-\u09FF]/.test(text);
 
             if (isBangla) {
                 const bnVoice = voices.find(v => v.lang.startsWith('bn'));

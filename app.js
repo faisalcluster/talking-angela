@@ -168,7 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 soundWaves.className = "sound-waves speaking";
 
                 // 2. Get AI Answer (await Gemini / intelligent brain)
-                const answer = await window.angelaVoiceAI.getAnswer(userTranscript);
+                const answer = await window.angelaVoiceAI.getAnswer(userTranscript, currentLang);
                 spawnParticles(canvas.width / 2, canvas.height * 0.35, ['💖', '✨', '🌸', '💡'], 16);
 
                 statusLabel.textContent = currentLang === 'bn' 
@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     : "🐱 Angela is answering...";
 
                 // 3. Angela speaks out loud in Natural Human Voice
-                await angelaSpeak(answer);
+                await angelaSpeak(answer, { lang: currentLang });
 
                 // 4. Automatically resume listening for the child's next question!
                 if (activeMode === 'ai' && !isSinging) {
@@ -307,7 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
             : sassyPhrasesEn[Math.floor(Math.random() * sassyPhrasesEn.length)];
 
         spawnParticles(canvas.width / 2, canvas.height * 0.45, ['😾', '💥', '⚡', '💢'], 12);
-        await angelaSpeak(phrase);
+        await angelaSpeak(phrase, { lang: currentLang });
 
         setTimeout(() => {
             warningBadge.classList.remove('show');
@@ -337,16 +337,16 @@ document.addEventListener('DOMContentLoaded', () => {
             "তুমি আমার সবচেয়ে প্রিয় লক্ষ্মী বন্ধু!"
         ];
         const sweetPhrasesEn = [
-            "Aww, you're so sweet! Purrrr! Assalamu Alaikum!",
-            "I love soft head cuddles! Meow!",
-            "You are the best friend ever!"
+            "Aww, you're so sweet! Purrrr! I love your cuddles!",
+            "I love gentle head petting! Meow!",
+            "You are my absolute sweetest friend ever!"
         ];
 
         const phrase = currentLang === 'bn'
             ? sweetPhrasesBn[Math.floor(Math.random() * sweetPhrasesBn.length)]
             : sweetPhrasesEn[Math.floor(Math.random() * sweetPhrasesEn.length)];
 
-        await angelaSpeak(phrase);
+        await angelaSpeak(phrase, { lang: currentLang });
         angelaFrame.classList.remove('purring');
         if (activeMode === 'ai') window.angelaVoiceAI.resumeAfterAngelaSpeech();
     }
@@ -356,8 +356,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (soundEnabled) window.angelaAudio.playGiggle();
         spawnParticles(canvas.width / 2, canvas.height * 0.3, ['💋', '😽', '✨'], 10);
 
-        const phrase = currentLang === 'bn' ? "চুমু নাও মিষ্টি সোনা! মুয়াহ! আসসালামু আলাইকুম!" : "Muah! Kisses for you!";
-        angelaSpeak(phrase);
+        const phrase = currentLang === 'bn' ? "চুমু নাও মিষ্টি সোনা! মুয়াহ! আসসালামু আলাইকুম!" : "Muah! Sweet kitty kisses for you darling!";
+        angelaSpeak(phrase, { lang: currentLang });
     }
 
     function triggerTailPull() {
@@ -366,8 +366,8 @@ document.addEventListener('DOMContentLoaded', () => {
         angelaFrame.classList.add('annoyed');
         spawnParticles(canvas.width * 0.25, canvas.height * 0.7, ['🐾', '🙀', '⭐'], 8);
 
-        const phrase = currentLang === 'bn' ? "আউচ! আমার নরম লেজ ধরে টেনো না! হিহি!" : "Ouch! Don't pull my fluffy tail! Hehe!";
-        angelaSpeak(phrase).then(() => {
+        const phrase = currentLang === 'bn' ? "আউচ! আমার নরম লেজ ধরে টেনো না! হিহি!" : "Ouch! Please don't pull my fluffy tail! Hehe!";
+        angelaSpeak(phrase, { lang: currentLang }).then(() => {
             angelaFrame.classList.remove('annoyed');
         });
     }
@@ -478,15 +478,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalAiSettings = document.getElementById('modal-ai-settings');
     const inputGeminiKey = document.getElementById('input-gemini-key');
     const btnSaveGemini = document.getElementById('btn-save-gemini');
+    const btnTestGemini = document.getElementById('btn-test-gemini');
     const btnClearGemini = document.getElementById('btn-clear-gemini');
+    const aiTestResult = document.getElementById('ai-test-result');
     const aiBadgeTitle = document.getElementById('ai-badge-title');
     const aiBadgeDesc = document.getElementById('ai-badge-desc');
 
     function updateAiSettingsUI() {
         if (window.angelaVoiceAI.hasGeminiKey()) {
-            aiBadgeTitle.textContent = "Google Gemini 1.5 Live AI সক্রিয়!";
-            aiBadgeDesc.textContent = "রিয়েল ChatGPT/Gemini ক্লাউড ব্রেন দিয়ে উত্তর দেওয়া হচ্ছে।";
-            inputGeminiKey.value = window.angelaVoiceAI.geminiApiKey;
+            const key = window.angelaVoiceAI.geminiApiKey;
+            const prov = key.startsWith('sk-') ? 'OpenAI ChatGPT' : 'Google Gemini';
+            aiBadgeTitle.textContent = `${prov} Live AI সক্রিয়! ✅`;
+            aiBadgeDesc.textContent = "রিয়েল ক্লাউড এআই ব্রেন দিয়ে লাইভ উত্তর দেওয়া হচ্ছে।";
+            inputGeminiKey.value = key;
         } else {
             aiBadgeTitle.textContent = "বিল্ট-ইন স্মার্ট এআই চালু আছে";
             aiBadgeDesc.textContent = "যেকোনো প্রশ্ন মুখে বলুন, অ্যাঞ্জেলা উত্তর দেবে!";
@@ -497,18 +501,46 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnAiSettings && modalAiSettings) {
         btnAiSettings.addEventListener('click', () => {
             updateAiSettingsUI();
+            if (aiTestResult) aiTestResult.className = 'ai-test-result';
             modalAiSettings.classList.add('open');
         });
     }
 
+    if (btnTestGemini) {
+        btnTestGemini.addEventListener('click', async () => {
+            const key = (inputGeminiKey.value || '').trim();
+            if (!key) {
+                aiTestResult.className = 'ai-test-result error';
+                aiTestResult.textContent = '❌ অনুগ্রহ করে আগে বক্সে API Key দিন!';
+                return;
+            }
+            aiTestResult.className = 'ai-test-result testing';
+            aiTestResult.textContent = '⏳ এআই কানেকশন টেস্ট করা হচ্ছে...';
+
+            const res = await window.angelaVoiceAI.testApiKey(key);
+            if (res.ok) {
+                aiTestResult.className = 'ai-test-result success';
+                aiTestResult.textContent = `✅ সফল! ${res.provider} কানেকশন সম্পূর্ণ ঠিক আছে!`;
+                window.angelaVoiceAI.setGeminiKey(key);
+                updateAiSettingsUI();
+            } else {
+                aiTestResult.className = 'ai-test-result error';
+                aiTestResult.textContent = `❌ এরর: ${res.error}`;
+            }
+        });
+    }
+
     if (btnSaveGemini) {
-        btnSaveGemini.addEventListener('click', () => {
+        btnSaveGemini.addEventListener('click', async () => {
             const key = (inputGeminiKey.value || '').trim();
             if (key) {
                 window.angelaVoiceAI.setGeminiKey(key);
                 updateAiSettingsUI();
                 modalAiSettings.classList.remove('open');
-                angelaSpeak("তোমার জেমিনি এআই ব্রেন কানেক্ট হয়ে গেছে! আমাকে যেকোনো কিছু জিজ্ঞেস করো ডার্লিং!");
+                const phrase = currentLang === 'bn'
+                    ? "তোমার এআই ব্রেন সেভ হয়েছে! আমাকে যেকোনো প্রশ্ন করো ডার্লিং!"
+                    : "Your AI key has been saved darling! Ask me anything!";
+                angelaSpeak(phrase, { lang: currentLang });
             }
         });
     }
@@ -517,7 +549,11 @@ document.addEventListener('DOMContentLoaded', () => {
         btnClearGemini.addEventListener('click', () => {
             window.angelaVoiceAI.clearGeminiKey();
             updateAiSettingsUI();
-            angelaSpeak("এআই কি মুছে ফেলা হয়েছে। এখন বিল্ট-ইন ব্রেন কাজ করবে!");
+            if (aiTestResult) aiTestResult.className = 'ai-test-result';
+            const phrase = currentLang === 'bn'
+                ? "এআই কি মুছে ফেলা হয়েছে। এখন বিল্ট-ইন ব্রেন কাজ করবে!"
+                : "AI key removed. Using built-in kitten brain!";
+            angelaSpeak(phrase, { lang: currentLang });
         });
     }
 
@@ -539,11 +575,11 @@ document.addEventListener('DOMContentLoaded', () => {
         statusLabel.textContent = currentLang === 'bn' ? "🐱 অ্যাঞ্জেলা ভাবছে..." : "🐱 Angela is thinking...";
         statusDot.className = "status-dot speaking";
 
-        const answer = await window.angelaVoiceAI.getAnswer(query);
+        const answer = await window.angelaVoiceAI.getAnswer(query, currentLang);
         spawnParticles(canvas.width / 2, canvas.height * 0.35, ['💖', '✨', '🌸', '💡'], 16);
 
         statusLabel.textContent = currentLang === 'bn' ? "🐱 অ্যাঞ্জেলা উত্তর দিচ্ছে..." : "🐱 Angela is answering...";
-        await angelaSpeak(answer);
+        await angelaSpeak(answer, { lang: currentLang });
 
         if (activeMode === 'ai' && !isSinging) {
             statusLabel.textContent = currentLang === 'bn' 
@@ -584,7 +620,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-food]').forEach(tile => {
         tile.addEventListener('click', () => {
             const foodEmoji = tile.dataset.food;
-            const foodName = tile.dataset.name;
+            const foodNameBn = tile.dataset.name;
+            const foodNameEn = tile.dataset.nameEn || tile.dataset.name;
+            const foodName = currentLang === 'bn' ? foodNameBn : foodNameEn;
             modalTreats.classList.remove('open');
 
             foodFeeder.textContent = foodEmoji;
@@ -609,9 +647,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const phrase = currentLang === 'bn'
                     ? `ইয়াম্মি! কী দারুণ মিষ্টি ${foodName}! অনেক ধন্যবাদ সোনা! আসসালামু আলাইকুম! 😋🥛`
-                    : `Mmm! Delicious ${foodName}! Thank you my sweetheart! 😋🧁`;
+                    : `Yummy! What delicious ${foodName}! Thank you so much sweetheart! 😋🧁`;
 
-                angelaSpeak(phrase).then(() => {
+                angelaSpeak(phrase, { lang: currentLang }).then(() => {
                     angelaFrame.classList.remove('bouncing');
                 });
             }, 650);
@@ -645,8 +683,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('accessory-flower').style.display = 'none';
                 dressGlow.className = 'dress-glow-layer';
                 
-                const phrase = currentLang === 'bn' ? "স্বাভাবিক সাজেই আমি সবচেয়ে মিষ্টি!" : "Natural beauty is always chic!";
-                angelaSpeak(phrase);
+                const phrase = currentLang === 'bn' ? "স্বাভাবিক সাজেই আমি সবচেয়ে মিষ্টি!" : "Natural beauty is always the chicest!";
+                angelaSpeak(phrase, { lang: currentLang });
                 return;
             }
 
@@ -655,8 +693,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isShown = glasses.style.display === 'block';
                 glasses.style.display = isShown ? 'none' : 'block';
 
-                const phrase = isShown ? "সানগ্লাস খুলে ফেললাম!" : "ওয়াও! এই স্টাইলিশ সানগ্লাস পরে আমাকে একদম ফ্যাশন স্টার লাগছে!";
-                angelaSpeak(phrase);
+                const phrase = currentLang === 'bn'
+                    ? (isShown ? "সানগ্লাস খুলে ফেললাম!" : "ওয়াও! এই স্টাইলিশ সানগ্লাস পরে আমাকে একদম ফ্যাশন স্টার লাগছে!")
+                    : (isShown ? "I took off my sunglasses!" : "Ooh la la! These stylish sunglasses make me look like a superstar!");
+                angelaSpeak(phrase, { lang: currentLang });
                 return;
             }
 
@@ -665,8 +705,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isShown = tiara.style.display === 'block';
                 tiara.style.display = isShown ? 'none' : 'block';
 
-                const phrase = isShown ? "মুকুট রেখে দিলাম!" : "ওওওহ লা লা! আমার মাথায় সোনার মুকুট! আমি কি রাজকুমারী হয়ে গেলাম?";
-                angelaSpeak(phrase);
+                const phrase = currentLang === 'bn'
+                    ? (isShown ? "মুকুট রেখে দিলাম!" : "ওওওহ লা লা! আমার মাথায় সোনার মুকুট! আমি কি রাজকুমারী হয়ে গেলাম?")
+                    : (isShown ? "I took off my tiara!" : "A sparkling golden crown! Am I a royal princess now?");
+                angelaSpeak(phrase, { lang: currentLang });
                 return;
             }
 
@@ -675,39 +717,80 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isShown = flower.style.display === 'block';
                 flower.style.display = isShown ? 'none' : 'block';
 
-                const phrase = isShown ? "ফুল খুলে রাখলাম!" : "আমার কানে মিষ্টি গোলাপী ফুল! আমাকে দেখতে অনেক মিষ্টি লাগছে তাই না?";
-                angelaSpeak(phrase);
+                const phrase = currentLang === 'bn'
+                    ? (isShown ? "ফুল খুলে রাখলাম!" : "আমার কানে মিষ্টি গোলাপী ফুল! আমাকে দেখতে অনেক মিষ্টি লাগছে তাই না?")
+                    : (isShown ? "I took off the flower!" : "A pretty pink flower on my ear! Don't I look adorable?");
+                angelaSpeak(phrase, { lang: currentLang });
                 return;
             }
 
             if (acc === 'dress_princess') {
                 dressGlow.className = 'dress-glow-layer princess';
-                const phrase = "ওয়াও! এই গোলাপি প্রিন্সেস গাউনে আমাকে সত্যি রূপকথার রাজকুমারীর মতো লাগছে!";
-                angelaSpeak(phrase);
+                const phrase = currentLang === 'bn'
+                    ? "ওয়াও! এই গোলাপি প্রিন্সেস গাউনে আমাকে সত্যি রূপকথার রাজকুমারীর মতো লাগছে!"
+                    : "Wow! In this pink princess gown, I feel like a real fairytale princess!";
+                angelaSpeak(phrase, { lang: currentLang });
                 return;
             }
 
             if (acc === 'dress_fairy') {
                 dressGlow.className = 'dress-glow-layer fairy';
-                const phrase = "ওওওহ লা লা! এই জাদুকরি পরীর ফ্রক পরে আমার উড়তে ইচ্ছে করছে!";
-                angelaSpeak(phrase);
+                const phrase = currentLang === 'bn'
+                    ? "ওওওহ লা লা! এই জাদুকরি পরীর ফ্রক পরে আমার উড়তে ইচ্ছে করছে!"
+                    : "Ooh la la! In this magical fairy dress, I feel like flying across Paris!";
+                angelaSpeak(phrase, { lang: currentLang });
                 return;
             }
         });
     });
 
+    function applyLanguage(lang) {
+        langLabel.textContent = lang === 'bn' ? 'English' : 'বাংলা';
+        langIndicator.textContent = lang === 'bn' ? 'পিওর ভয়েস গেম (Pure Voice) ✨' : 'Pure Voice Game 🎀';
+
+        if (tabAiMode) tabAiMode.textContent = lang === 'bn' ? '🤖 AI অটো ভয়েস চ্যাট (Auto Voice)' : '🤖 AI Auto Voice Chat';
+        if (tabRepeatMode) tabRepeatMode.textContent = lang === 'bn' ? '🔄 ফানি রিপিট (Voice Repeat)' : '🔄 Funny Repeat';
+
+        if (statusLabel) {
+            statusLabel.textContent = lang === 'bn' 
+                ? (activeMode === 'ai' ? '🎙️ শুনছি... সরাসরি কথা বলুন (অটো চলবে)' : '🔄 ফানি রিপিট: কথা বলে ১.৫ সেকেন্ড থামুন')
+                : (activeMode === 'ai' ? '🎙️ Listening... Speak naturally (Hands-Free)' : '🔄 Voice Repeat: Speak & pause 1.5s');
+        }
+
+        if (textChatInput) {
+            textChatInput.placeholder = lang === 'bn'
+                ? "মুখে কথা বলুন বা এখানে লিখে এআই প্রশ্ন করুন..."
+                : "Speak naturally or type your AI question here...";
+        }
+
+        if (warningBadge) {
+            warningBadge.textContent = lang === 'bn' ? '😾 "উহহ! আমাকে খোঁচা দিও না!"' : "😾 \"Uhh don't touch me!\"";
+        }
+
+        // Update modal titles
+        const songsTitle = document.querySelector('#modal-songs .modal-title');
+        if (songsTitle) songsTitle.innerHTML = lang === 'bn' ? '<span>🎶</span> গান ও ছড়া (Songs & Rhymes)' : '<span>🎶</span> Songs & Rhymes';
+
+        const treatsTitle = document.querySelector('#modal-treats .modal-title');
+        if (treatsTitle) treatsTitle.innerHTML = lang === 'bn' ? '<span>🧁</span> খাবার খাওয়ানো (Treats)' : '<span>🧁</span> Treats for Angela';
+
+        const dressTitle = document.querySelector('#modal-dressup .modal-title');
+        if (dressTitle) dressTitle.innerHTML = lang === 'bn' ? '<span>👑</span> ড্রেস ও সাজসজ্জা' : '<span>👑</span> Fashion Closet';
+
+        window.angelaVoiceAI.currentLang = lang === 'bn' ? 'bn-BD' : 'en-US';
+    }
+
     // Language Toggle
     btnLangToggle.addEventListener('click', () => {
         currentLang = currentLang === 'bn' ? 'en' : 'bn';
-        langLabel.textContent = currentLang === 'bn' ? 'English' : 'বাংলা';
-        langIndicator.textContent = currentLang === 'bn' ? 'পিওর ভয়েস গেম (Pure Voice) ✨' : 'Pure Voice Game 🎀';
+        applyLanguage(currentLang);
 
         if (soundEnabled && window.angelaAudio) window.angelaAudio.playSparkle();
 
         if (currentLang === 'bn') {
-            angelaSpeak("আসসালামু আলাইকুম ছোট্ট বন্ধু! আমি অ্যাঞ্জেলা! আমার সাথে সরাসরি মুখে কথা বলো!");
+            angelaSpeak("আসসালামু আলাইকুম ছোট্ট বন্ধু! আমি অ্যাঞ্জেলা! আমার সাথে সরাসরি মুখে কথা বলো!", { lang: 'bn' });
         } else {
-            angelaSpeak("Assalamu Alaikum little star! I am Angela! Speak to me naturally!");
+            angelaSpeak("Hello sweetheart! I am Angela! Speak to me in English and I will answer you!", { lang: 'en' });
         }
 
         if (activeMode === 'ai') {
