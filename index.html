@@ -1,280 +1,312 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Talking Angela Web — Classic & Smart AI</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Talking Angela 🎀 - Pure Voice Kids Game | টকিং অ্যাঞ্জেলা</title>
+    <meta name="description" content="Talking Angela pure voice-based interactive kids game with continuous hands-free AI voice chat, voice repeater, touch reactions, and songs.">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐱</text></svg>">
 </head>
 <body>
-  <div class="app-container">
-    <!-- Top Bar -->
-    <header class="top-bar">
-      <div class="brand">
-        <span class="brand-icon">🐱</span>
-        <div>
-          <h1>Talking Angela</h1>
-          <span class="brand-tag">Web Edition</span>
-        </div>
-      </div>
-      <div class="top-actions">
-        <button id="btn-sound-toggle" class="icon-btn" title="সাউন্ড অন/অফ">🔊</button>
-        <button id="btn-settings" class="icon-btn" title="AI সেটিংস">⚙️</button>
-      </div>
-    </header>
+    <div class="angela-app" id="angela-app">
+        <!-- Top Navigation Bar -->
+        <header class="top-bar">
+            <div class="logo-badge">
+                <span class="logo-icon">🎀</span>
+                <div class="logo-text">
+                    <h1>Talking Angela</h1>
+                    <span id="lang-indicator">পিওর ভয়েস গেম (Pure Voice) ✨</span>
+                </div>
+            </div>
+            <div class="top-actions">
+                <button class="pill-btn" id="btn-ai-settings" title="AI Settings (Gemini / ChatGPT)">
+                    ⚙️ AI
+                </button>
+                <button class="pill-btn" id="btn-lang-toggle" title="Change Language">
+                    🌐 <span id="lang-label">বাংলা</span>
+                </button>
+                <button class="pill-btn" id="btn-sound-toggle" title="Sound Effects">
+                    🔊
+                </button>
+            </div>
+        </header>
 
-    <!-- Mode Selector -->
-    <div class="mode-switch-wrapper">
-      <div class="mode-pill" id="mode-selector">
-        <button id="mode-repeat-btn" class="mode-btn active" data-mode="repeat">
-          <span class="mode-icon">🔁</span>
-          <span class="mode-label">কার্টুন রিপিট (Classic)</span>
-        </button>
-        <button id="mode-ai-btn" class="mode-btn" data-mode="ai">
-          <span class="mode-icon">🤖</span>
-          <span class="mode-label">স্মার্ট AI (Gemini / ChatGPT)</span>
-        </button>
-      </div>
+        <!-- Mode Switcher Bar (Hands-free Continuous AI vs Repeat) -->
+        <div class="mode-switcher-bar">
+            <button class="mode-tab-btn active" id="tab-ai-mode" data-mode="ai">
+                🤖 AI অটো ভয়েস চ্যাট (Auto Voice)
+            </button>
+            <button class="mode-tab-btn" id="tab-repeat-mode" data-mode="repeat">
+                🔄 ফানি রিপিট (Voice Repeat)
+            </button>
+        </div>
+
+        <!-- Live Voice Activity Indicator Bar (Clean & Minimal) -->
+        <div class="voice-activity-bar" id="voice-activity-bar">
+            <div class="voice-status-wrap">
+                <span class="pulse-ring" id="status-ring"></span>
+                <span class="status-dot" id="status-dot"></span>
+                <span class="status-label" id="status-label">🎙️ শুনছি... সরাসরি কথা বলুন (অটো চলবে)</span>
+            </div>
+            <div class="sound-waves" id="sound-waves">
+                <span class="wave-bar"></span>
+                <span class="wave-bar"></span>
+                <span class="wave-bar"></span>
+                <span class="wave-bar"></span>
+                <span class="wave-bar"></span>
+            </div>
+        </div>
+
+        <!-- Optional Text Input Bar for AI Mode -->
+        <div class="text-chat-bar" id="text-chat-bar">
+            <input type="text" id="text-chat-input" placeholder="মুখে কথা বলুন বা এখানে লিখে এআই প্রশ্ন করুন..." />
+            <button id="btn-text-send" class="btn-text-send" title="পাঠান">➤</button>
+        </div>
+
+        <!-- Main Character Stage Viewport (Full Screen Clean Visual, No Text Clutter) -->
+        <main class="stage-viewport" id="stage-viewport">
+            <!-- Background & Particle Canvas -->
+            <canvas id="particle-canvas"></canvas>
+
+            <!-- "Uhh don't touch me!" Warning Badge -->
+            <div class="touch-warning-badge" id="warning-badge">
+                😾 "Uhh don't touch me!"
+            </div>
+
+            <!-- Floating Food Feeder Animation -->
+            <div class="food-feeder-animation" id="food-feeder">🧁</div>
+
+            <!-- Angela Character Frame -->
+            <div class="angela-frame" id="angela-frame">
+                <img src="assets/angela_happy.jpg" alt="Talking Angela" class="angela-photo" id="angela-photo" draggable="false">
+
+                <!-- Dress Aura Layers -->
+                <div class="dress-glow-layer" id="dress-glow"></div>
+
+                <!-- Accessory Overlays: Perfectly Fitted On Eyes & Head -->
+                <div class="accessory-layer">
+                    <!-- Chic Cat-Eye Sunglasses Fitted Exactly On Eyes -->
+                    <div class="glasses-wrapper" id="accessory-glasses">
+                        <svg class="glasses-svg" viewBox="0 0 180 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Left Frame & Lens -->
+                            <path d="M12 28 C10 10, 50 8, 80 20 C85 24, 75 56, 45 58 C15 60, 10 40, 12 28 Z" fill="url(#lensGrad)" stroke="#ff2a85" stroke-width="4.5"/>
+                            <!-- Right Frame & Lens -->
+                            <path d="M168 28 C170 10, 130 8, 100 20 C95 24, 105 56, 135 58 C165 60, 170 40, 168 28 Z" fill="url(#lensGrad)" stroke="#ff2a85" stroke-width="4.5"/>
+                            <!-- Bridge -->
+                            <path d="M78 22 C85 16, 95 16, 102 22" stroke="#ff2a85" stroke-width="4.5" stroke-linecap="round"/>
+                            <!-- Rhinestones on Temples -->
+                            <circle cx="16" cy="18" r="3" fill="#ffffff" filter="drop-shadow(0 0 2px #fff)"/>
+                            <circle cx="164" cy="18" r="3" fill="#ffffff" filter="drop-shadow(0 0 2px #fff)"/>
+                            <!-- Shine Reflection -->
+                            <path d="M26 22 Q42 16 58 22" stroke="rgba(255,255,255,0.6)" stroke-width="2.5" stroke-linecap="round"/>
+                            <path d="M122 22 Q138 16 154 22" stroke="rgba(255,255,255,0.6)" stroke-width="2.5" stroke-linecap="round"/>
+                            <defs>
+                                <linearGradient id="lensGrad" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#2d122d" stop-opacity="0.9"/>
+                                    <stop offset="60%" stop-color="#67194f" stop-opacity="0.85"/>
+                                    <stop offset="100%" stop-color="#b8206d" stop-opacity="0.75"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+
+                    <span id="accessory-tiara">👑</span>
+                    <span id="accessory-flower">🌸</span>
+                </div>
+
+                <!-- Interactive Touch Hitboxes -->
+                <div class="touch-hitbox" id="hitbox-head" title="Pet Head" aria-label="Head"></div>
+                <div class="touch-hitbox" id="hitbox-cheeks" title="Tickle Cheeks" aria-label="Cheeks"></div>
+                <div class="touch-hitbox" id="hitbox-belly" title="Poke Belly (Uhh don't touch me!)" aria-label="Belly"></div>
+                <div class="touch-hitbox" id="hitbox-tail" title="Pull Tail" aria-label="Tail"></div>
+                <div class="touch-hitbox" id="hitbox-feet" title="Tickle Feet" aria-label="Feet"></div>
+            </div>
+        </main>
+
+        <!-- Bottom Interactive Dock -->
+        <footer class="bottom-dock">
+            <!-- Quick Touch Action Shortcut Bar -->
+            <div class="quick-touch-bar">
+                <button class="touch-btn tickle" id="quick-tickle">
+                    💖 Pet Angela
+                </button>
+                <button class="touch-btn annoy" id="quick-poke">
+                    😾 Poke Tummy
+                </button>
+                <button class="touch-btn pet" id="quick-purr">
+                    🐾 Purr & Cuddle
+                </button>
+            </div>
+
+            <!-- Main Actions Grid -->
+            <div class="actions-grid">
+                <!-- Songs & Rhymes Jukebox -->
+                <button class="dock-btn" id="btn-open-songs" title="Real Songs & Rhymes">
+                    <span class="btn-icon">🎶</span>
+                    <span class="btn-label">Songs</span>
+                </button>
+
+                <!-- Treats Food -->
+                <button class="dock-btn" id="btn-open-treats" title="Feed Angela">
+                    <span class="btn-icon">🧁</span>
+                    <span class="btn-label">Treats</span>
+                </button>
+
+                <!-- Dress Up -->
+                <button class="dock-btn" id="btn-open-dressup" title="Dress Up">
+                    <span class="btn-icon">👑</span>
+                    <span class="btn-label">Dress Up</span>
+                </button>
+            </div>
+        </footer>
+
+        <!-- Modal 1: Songs & Rhymes Jukebox Modal -->
+        <div class="modal-overlay" id="modal-songs">
+            <div class="modal-sheet">
+                <div class="modal-header">
+                    <div class="modal-title">
+                        <span>🎶</span> গান ও ছড়া (Songs & Rhymes)
+                    </div>
+                    <button class="close-modal-btn" data-close="modal-songs">✕</button>
+                </div>
+                
+                <div class="songs-grid" id="songs-list-container">
+                    <!-- Populated by JavaScript from ANGELA_SONGS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal 2: Treats / Food Feeding Modal -->
+        <div class="modal-overlay" id="modal-treats">
+            <div class="modal-sheet">
+                <div class="modal-header">
+                    <div class="modal-title">
+                        <span>🧁</span> খাবার খাওয়ানো (Treats for Angela)
+                    </div>
+                    <button class="close-modal-btn" data-close="modal-treats">✕</button>
+                </div>
+                
+                <div class="items-grid">
+                    <div class="item-tile" data-food="🥛" data-name="দুধ">
+                        <span class="item-icon">🥛</span>
+                        <span>দুধ (Milk)</span>
+                    </div>
+                    <div class="item-tile" data-food="🧁" data-name="কাপকেক">
+                        <span class="item-icon">🧁</span>
+                        <span>কাপকেক (Cupcake)</span>
+                    </div>
+                    <div class="item-tile" data-food="🐟" data-name="মাছের টুকরো">
+                        <span class="item-icon">🐟</span>
+                        <span>মাছের টুকরো</span>
+                    </div>
+                    <div class="item-tile" data-food="🍦" data-name="আইসক্রিম">
+                        <span class="item-icon">🍦</span>
+                        <span>আইসক্রিম</span>
+                    </div>
+                    <div class="item-tile" data-food="🍓" data-name="স্ট্রবেরি">
+                        <span class="item-icon">🍓</span>
+                        <span>স্ট্রবেরি</span>
+                    </div>
+                    <div class="item-tile" data-food="🍪" data-name="বিস্কুট">
+                        <span class="item-icon">🍪</span>
+                        <span>বিস্কুট</span>
+                    </div>
+                    <div class="item-tile" data-food="🍉" data-name="তরমুজ">
+                        <span class="item-icon">🍉</span>
+                        <span>তরমুজ</span>
+                    </div>
+                    <div class="item-tile" data-food="🍩" data-name="ডোনাট">
+                        <span class="item-icon">🍩</span>
+                        <span>ডোনাট</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal 3: Dress Up / Outfits Modal -->
+        <div class="modal-overlay" id="modal-dressup">
+            <div class="modal-sheet">
+                <div class="modal-header">
+                    <div class="modal-title">
+                        <span>👑</span> ড্রেস ও সাজসজ্জা (Fashion Closet)
+                    </div>
+                    <button class="close-modal-btn" data-close="modal-dressup">✕</button>
+                </div>
+                
+                <div class="items-grid">
+                    <div class="item-tile" data-acc="glasses">
+                        <span class="item-icon">🕶️</span>
+                        <span>সানগ্লাস</span>
+                    </div>
+                    <div class="item-tile" data-acc="tiara">
+                        <span class="item-icon">👑</span>
+                        <span>রাজকীয় মুকুট</span>
+                    </div>
+                    <div class="item-tile" data-acc="flower">
+                        <span class="item-icon">🌸</span>
+                        <span>গোলাপি ফুল</span>
+                    </div>
+                    <div class="item-tile" data-acc="dress_princess">
+                        <span class="item-icon">👗</span>
+                        <span>প্রিন্সেস গাউন</span>
+                    </div>
+                    <div class="item-tile" data-acc="dress_fairy">
+                        <span class="item-icon">🧚‍♀️</span>
+                        <span>পরীর ফ্রক</span>
+                    </div>
+                    <div class="item-tile" data-acc="clear">
+                        <span class="item-icon">✨</span>
+                        <span>স্বাভাবিক সাজ</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal 4: AI Settings (Google Gemini / ChatGPT Live AI) -->
+        <div class="modal-overlay" id="modal-ai-settings">
+            <div class="modal-sheet">
+                <div class="modal-header">
+                    <div class="modal-title">
+                        <span>🤖</span> রিয়েল এআই সেটিংস (Gemini / ChatGPT)
+                    </div>
+                    <button class="close-modal-btn" data-close="modal-ai-settings">✕</button>
+                </div>
+
+                <div class="ai-settings-body">
+                    <div class="ai-status-card" id="ai-status-card">
+                        <span class="ai-badge-icon">✨</span>
+                        <div class="ai-badge-text">
+                            <strong id="ai-badge-title">বিল্ট-ইন স্মার্ট এআই চালু আছে</strong>
+                            <small id="ai-badge-desc">যেকোনো প্রশ্ন মুখে বলুন, অ্যাঞ্জেলা উত্তর দেবে!</small>
+                        </div>
+                    </div>
+
+                    <div class="ai-form-box">
+                        <label for="input-gemini-key">Google Gemini API Key (ফ্রি):</label>
+                        <p class="ai-help-text">
+                            আসল চ্যাটজিপিটি/জেমিনি এআই ব্রেন দিয়ে কথা বলতে চাইলে নিচের বক্সে আপনার ফ্রি কী পেস্ট করুন। এটি আপনার ব্রাউজারে সুরক্ষিত থাকবে।
+                        </p>
+                        <div class="key-input-row">
+                            <input type="password" id="input-gemini-key" placeholder="AIzaSy... (API Key দিন)" autocomplete="off">
+                            <button id="btn-save-gemini" class="btn-save-key">সেভ</button>
+                        </div>
+                        <div class="key-actions-row">
+                            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" class="link-get-key">
+                                🔗 ফ্রি Google Gemini API Key নিন ↗
+                            </a>
+                            <button id="btn-clear-gemini" class="btn-clear-key">মুছুন</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Angela Speech Bubble -->
-    <div class="bubble-container">
-      <div id="speech-bubble" class="speech-bubble">
-        <p id="bubble-text">হ্যালো! আমি অ্যাঞ্জেলা! আমার সাথে কথা বলো~ 💖</p>
-        <div class="bubble-tail"></div>
-      </div>
-    </div>
-
-    <!-- Character Stage -->
-    <main class="stage" id="stage">
-      <div class="hearts-container" id="hearts-container"></div>
-      
-      <!-- Angela Interactive SVG Character -->
-      <div class="character-wrapper" id="character-wrapper">
-        <svg id="angela-svg" viewBox="0 0 400 500" class="angela-svg">
-          <!-- Shadow -->
-          <ellipse cx="200" cy="470" rx="110" ry="18" fill="rgba(0, 0, 0, 0.12)" />
-
-          <!-- Tail -->
-          <g id="tail" class="tail-anim">
-            <path d="M 240 420 Q 320 440 330 360 Q 335 320 300 330 Q 280 340 270 380 Z" fill="#F8F9FA" stroke="#E2E8F0" stroke-width="2.5" />
-            <path d="M 315 335 Q 330 320 335 345" stroke="#F472B6" stroke-width="3" stroke-linecap="round" fill="none" />
-          </g>
-
-          <!-- Body -->
-          <g id="body" class="body-group">
-            <!-- Torso -->
-            <path d="M 140 440 C 130 360 145 280 200 280 C 255 280 270 360 260 440 C 240 460 160 460 140 440 Z" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2.5" />
-            <!-- Soft Pink Belly Patch -->
-            <ellipse cx="200" cy="375" rx="42" ry="50" fill="#FFF1F2" />
-            
-            <!-- Paws (Resting on lap/sides) -->
-            <ellipse cx="145" cy="445" rx="20" ry="14" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2" />
-            <ellipse cx="255" cy="445" rx="20" ry="14" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2" />
-
-            <!-- Paws Front (Hands) -->
-            <g id="hands" class="hands-anim">
-              <ellipse cx="170" cy="335" rx="14" ry="12" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2" />
-              <ellipse cx="230" cy="335" rx="14" ry="12" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2" />
-              <!-- Paw pads -->
-              <circle cx="170" cy="335" r="4" fill="#FDA4AF" opacity="0.6"/>
-              <circle cx="230" cy="335" r="4" fill="#FDA4AF" opacity="0.6"/>
-            </g>
-
-            <!-- Angela's Chic Necklace -->
-            <path d="M 165 292 Q 200 312 235 292" stroke="#F43F5E" stroke-width="4" fill="none" stroke-linecap="round" />
-            <circle cx="200" cy="308" r="9" fill="#FB7185" stroke="#E11D48" stroke-width="1.5" />
-            <!-- Heart locket inside necklace -->
-            <path d="M 200 304 C 198 301 195 301 194 303 C 193 306 195 309 200 312 C 205 309 207 306 206 303 C 205 301 202 301 200 304 Z" fill="#FFF" />
-          </g>
-
-          <!-- Head Group (Interactive) -->
-          <g id="head" class="head-group">
-            <!-- Ears -->
-            <g id="ear-left" class="ear ear-left">
-              <path d="M 115 160 L 95 65 Q 120 70 160 120 Z" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2.5" />
-              <!-- Inner Ear Pink -->
-              <path d="M 118 145 L 108 85 Q 125 90 148 122 Z" fill="#FECDD3" />
-            </g>
-            <g id="ear-right" class="ear ear-right">
-              <path d="M 285 160 L 305 65 Q 280 70 240 120 Z" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2.5" />
-              <!-- Inner Ear Pink -->
-              <path d="M 282 145 L 292 85 Q 275 90 252 122 Z" fill="#FECDD3" />
-            </g>
-
-            <!-- Ear Bow (Angela's signature cute bow on right ear) -->
-            <g id="hair-bow" transform="translate(255, 95) rotate(15)">
-              <polygon points="0,0 -16,-12 -16,12" fill="#F43F5E" />
-              <polygon points="0,0 16,-12 16,12" fill="#F43F5E" />
-              <circle cx="0" cy="0" r="5" fill="#FFE4E6" stroke="#BE123C" stroke-width="1" />
-            </g>
-
-            <!-- Face Base -->
-            <ellipse cx="200" cy="185" rx="85" ry="75" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2.5" />
-
-            <!-- Soft Blush Cheeks -->
-            <ellipse cx="145" cy="205" rx="14" ry="9" fill="#FDA4AF" opacity="0.65" />
-            <ellipse cx="255" cy="205" rx="14" ry="9" fill="#FDA4AF" opacity="0.65" />
-
-            <!-- Whiskers -->
-            <g stroke="#CBD5E1" stroke-width="2" stroke-linecap="round">
-              <line x1="125" y1="195" x2="80" y2="190" />
-              <line x1="125" y1="205" x2="82" y2="208" />
-              <line x1="275" y1="195" x2="320" y2="190" />
-              <line x1="275" y1="205" x2="318" y2="208" />
-            </g>
-
-            <!-- Eyes Group -->
-            <g id="eyes" class="eyes-group">
-              <!-- Left Eye -->
-              <g id="eye-left" class="eye">
-                <!-- Eye Outline -->
-                <ellipse cx="160" cy="170" rx="19" ry="24" fill="#FFFFFF" stroke="#334155" stroke-width="2.5" />
-                <!-- Angela's Sapphire Blue Iris -->
-                <ellipse cx="162" cy="170" rx="13" ry="18" fill="#0284C7" />
-                <ellipse cx="163" cy="170" rx="9" ry="13" fill="#0369A1" />
-                <!-- Pupil -->
-                <ellipse cx="164" cy="170" rx="6" ry="9" fill="#0F172A" />
-                <!-- Highlights -->
-                <circle cx="158" cy="164" r="5" fill="#FFFFFF" />
-                <circle cx="166" cy="174" r="2.5" fill="#FFFFFF" />
-                <!-- Angela Eyelashes -->
-                <path d="M 144 156 Q 158 146 178 153" stroke="#0F172A" stroke-width="3" fill="none" stroke-linecap="round" />
-                <path d="M 143 154 L 137 148" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round" />
-                <path d="M 149 149 L 146 142" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round" />
-                <path d="M 158 147 L 158 140" stroke="#0F172A" stroke-width="2" stroke-linecap="round" />
-              </g>
-
-              <!-- Right Eye -->
-              <g id="eye-right" class="eye">
-                <!-- Eye Outline -->
-                <ellipse cx="240" cy="170" rx="19" ry="24" fill="#FFFFFF" stroke="#334155" stroke-width="2.5" />
-                <!-- Angela's Sapphire Blue Iris -->
-                <ellipse cx="238" cy="170" rx="13" ry="18" fill="#0284C7" />
-                <ellipse cx="237" cy="170" rx="9" ry="13" fill="#0369A1" />
-                <!-- Pupil -->
-                <ellipse cx="236" cy="170" rx="6" ry="9" fill="#0F172A" />
-                <!-- Highlights -->
-                <circle cx="234" cy="164" r="5" fill="#FFFFFF" />
-                <circle cx="242" cy="174" r="2.5" fill="#FFFFFF" />
-                <!-- Angela Eyelashes -->
-                <path d="M 222 153 Q 242 146 256 156" stroke="#0F172A" stroke-width="3" fill="none" stroke-linecap="round" />
-                <path d="M 257 154 L 263 148" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round" />
-                <path d="M 251 149 L 254 142" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round" />
-                <path d="M 242 147 L 242 140" stroke="#0F172A" stroke-width="2" stroke-linecap="round" />
-              </g>
-              
-              <!-- Blink Eyelids (hidden by default, triggered during blink) -->
-              <g id="eyelids-closed" class="eyelids-closed" style="display: none;">
-                <path d="M 142 172 Q 160 185 178 172" stroke="#0F172A" stroke-width="3.5" fill="none" stroke-linecap="round" />
-                <path d="M 222 172 Q 240 185 258 172" stroke="#0F172A" stroke-width="3.5" fill="none" stroke-linecap="round" />
-              </g>
-            </g>
-
-            <!-- Cute Nose -->
-            <polygon points="200,195 194,188 206,188" fill="#FB7185" stroke="#F43F5E" stroke-width="1" stroke-linejoin="round" />
-
-            <!-- Mouth Variations -->
-            <g id="mouth-container">
-              <!-- Default Smile -->
-              <path id="mouth-idle" d="M 190 203 Q 200 210 200 200 Q 200 210 210 203" stroke="#F43F5E" stroke-width="2.5" fill="none" stroke-linecap="round" />
-              
-              <!-- Mouth Open Small (talking frame 1) -->
-              <path id="mouth-open-small" style="display: none;" d="M 192 201 Q 200 215 208 201 Q 200 205 192 201 Z" fill="#E11D48" stroke="#BE123C" stroke-width="1.5" />
-              
-              <!-- Mouth Open Big (talking frame 2 / laughing) -->
-              <path id="mouth-open-big" style="display: none;" d="M 188 200 Q 200 226 212 200 Q 200 206 188 200 Z" fill="#BE123C" stroke="#9F1239" stroke-width="1.5">
-              </path>
-              <ellipse id="mouth-tongue" style="display: none;" cx="200" cy="216" rx="8" ry="5" fill="#FDA4AF" />
-            </g>
-          </g>
-        </svg>
-
-        <!-- Tap Hitboxes for Interactive Touches -->
-        <div class="hitbox hitbox-head" id="hitbox-head" title="মাথায় হাত বোলাও (Pet Angela)"></div>
-        <div class="hitbox hitbox-belly" id="hitbox-belly" title="পেটে ট্যাপ করো (Tickle)"></div>
-        <div class="hitbox hitbox-ear-left" id="hitbox-ear-left" title="কানে ট্যাপ করো"></div>
-        <div class="hitbox hitbox-ear-right" id="hitbox-ear-right" title="কানে ট্যাপ করো"></div>
-      </div>
-
-      <!-- Live Status Badge -->
-      <div class="status-pill" id="status-pill">
-        <span class="status-dot" id="status-dot"></span>
-        <span id="status-text">রেডি! মাইক্রোফোন অন করুন</span>
-      </div>
-    </main>
-
-    <!-- Controls Bottom Section -->
-    <footer class="bottom-controls">
-      <!-- Input Mode Bar for AI typing -->
-      <div class="ai-input-bar" id="ai-input-bar">
-        <input type="text" id="ai-text-input" placeholder="অ্যাঞ্জেলাকে কিছু জিজ্ঞেস করুন... (বাংলা/English)" />
-        <button id="btn-send-text" class="btn-send" title="Send">➤</button>
-      </div>
-
-      <!-- Main Action: Big Mic Button -->
-      <div class="mic-action-area">
-        <button id="btn-mic" class="mic-button" title="মাইক্রোফোন চালু/বন্ধ করুন">
-          <div class="mic-wave-ring"></div>
-          <span class="mic-icon">🎙️</span>
-        </button>
-        <span class="mic-hint" id="mic-hint">মাইক্রোফোনে ট্যাপ করে কথা বলো</span>
-      </div>
-
-      <!-- Touch Action Buttons (Classic Tom/Angela Style) -->
-      <div class="fun-actions-row">
-        <button class="fun-btn" id="btn-pet" title="আদর করো">💖 আদর</button>
-        <button class="fun-btn" id="btn-poke" title="সুড়সুড়ি">🤭 সুড়সুড়ি</button>
-        <button class="fun-btn" id="btn-meow" title="মিয়াঁও">🐾 মিয়াঁও</button>
-      </div>
-    </footer>
-  </div>
-
-  <!-- Settings Modal (For Gemini API Key & Audio Config) -->
-  <div class="modal-overlay" id="settings-modal" style="display: none;">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3>⚙️ Angela AI সেটিংস</h3>
-        <button class="close-btn" id="btn-close-modal">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="info-alert">
-          💡 <strong>ডিফল্টভাবে</strong> অ্যাঞ্জেলার ভেতর বিল্ট-ইন স্মার্ট এআই ব্রেন আছে। আসল <strong>Google Gemini API</strong> দিয়ে আনলিমিটেড লাইভ রিয়েল-টাইম কথাবার্তা বলতে নিচে আপনার ফ্রি API Key দিতে পারেন।
-        </div>
-
-        <div class="form-group">
-          <label for="gemini-api-key">Google Gemini API Key (ফ্রি):</label>
-          <input type="password" id="gemini-api-key" placeholder="AIzaSy..." autocomplete="off" />
-          <small><a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">এখান থেকে ফ্রি API Key নিন ↗</a> (১ মিনিট লাগে)</small>
-        </div>
-
-        <div class="form-group">
-          <label for="pitch-slider">কার্টুন ভয়েস পিচ (Pitch Shift):</label>
-          <div class="range-wrapper">
-            <span>স্বাভাবিক</span>
-            <input type="range" id="pitch-slider" min="1.1" max="1.9" step="0.05" value="1.45">
-            <span>চিকন কিউট</span>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="lang-select">AI ভাষা প্রেফারেন্স:</label>
-          <select id="lang-select">
-            <option value="bn-BD">বাংলা ও বাংলিশ (Bengali + Banglish)</option>
-            <option value="en-US">English</option>
-          </select>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-secondary" id="btn-reset-key">মুছে ফেলুন</button>
-        <button class="btn-primary" id="btn-save-settings">সংরক্ষণ করুন</button>
-      </div>
-    </div>
-  </div>
-
-  <script src="app.js"></script>
+    <!-- Scripts -->
+    <script src="audio.js"></script>
+    <script src="songs.js"></script>
+    <script src="ai-chat.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
